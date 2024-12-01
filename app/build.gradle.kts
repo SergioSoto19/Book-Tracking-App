@@ -41,9 +41,9 @@ android {
 }
 
 dependencies {
-    implementation(libs.bom)
-    implementation(libs.postgrest.kt)
-    implementation(libs.ktor.client.android)
+    implementation(platform(libs.bom.v302))
+    implementation(libs.github.postgrest.kt)
+    implementation(libs.ktor.client.android.v301)
     implementation(libs.androidx.core.ktx)
     implementation(libs.androidx.lifecycle.runtime.ktx)
     implementation(libs.androidx.activity.compose)
