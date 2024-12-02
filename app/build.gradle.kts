@@ -47,6 +47,8 @@ dependencies {
     implementation(libs.androidx.room.ktx)
     implementation(libs.androidx.room.runtime)
     ksp(libs.androidx.room.compiler)
+    implementation(libs.androidx.constraintlayout.compose)
+    implementation(libs.androidx.navigation.compose)
     implementation(platform(libs.bom.v302))
     implementation(libs.github.postgrest.kt)
     implementation(libs.ktor.client.android.v301)
