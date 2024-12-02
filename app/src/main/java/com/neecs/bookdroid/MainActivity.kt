@@ -19,6 +19,7 @@ import com.neecs.bookdroid.ui.theme.BookdroidTheme
 import com.neecs.bookdroid.ui.viewmodel.LoginViewModel
 
 import androidx.compose.runtime.collectAsState
+import com.neecs.bookdroid.ui.composables.RegisterScreen
 
 class MainActivity : ComponentActivity() {
 
@@ -37,7 +38,7 @@ class MainActivity : ComponentActivity() {
                 // Configuración del NavHost y las pantallas de la app
                 NavHost(
                     navController = navController,
-                    startDestination = "login"
+                    startDestination = "login" // Pantalla inicial
                 ) {
                     // Pantalla de inicio de sesión
                     composable("login") {
@@ -58,6 +59,20 @@ class MainActivity : ComponentActivity() {
                             onLogin = {
                                 // Navegar a "home" después de iniciar sesión
                                 navController.navigate("home")
+                            }
+                        )
+                    }
+
+                    // Pantalla de registro (Ruta "register")
+                    composable("register") {
+                        RegisterScreen(
+                            onRegister = {
+                                // Lógica para registrar al usuario y navegar a la pantalla "home"
+                                navController.navigate("home")
+                            },
+                            onBackToLogin = {
+                                // Regresar a la pantalla de login
+                                navController.popBackStack("login", false)
                             }
                         )
                     }

@@ -111,7 +111,7 @@ fun LoginScreen(
             text = "Registrarse",
             color = MaterialTheme.colorScheme.primary,
             modifier = Modifier
-                .clickable(onClick = onRegister)
+                .clickable(onClick = onRegister) // Llama al callback para navegar
                 .padding(8.dp)
                 .constrainAs(register) {
                     top.linkTo(forgotPassword.bottom, margin = 25.dp) // Colocado debajo de "¿Olvidaste la contraseña?"
