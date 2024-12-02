@@ -12,8 +12,12 @@ ktorClientAndroidVersion = "3.0.1"
 lifecycleRuntimeKtx = "2.6.1"
 activityCompose = "1.8.0"
 composeBom = "2024.04.01"
+navigationCompose = "2.8.3"
+constraintlayoutCompose = "1.0.1"
 
 [libraries]
+androidx-constraintlayout-compose = { module = "androidx.constraintlayout:constraintlayout-compose", version.ref = "constraintlayoutCompose" }
+androidx-navigation-compose = { module = "androidx.navigation:navigation-compose", version.ref = "navigationCompose" }
 androidx-core-ktx = { group = "androidx.core", name = "core-ktx", version.ref = "coreKtx" }
 bom = { module = "io.github.jan-tennert.supabase:bom", version.ref = "bom" }
 bom-v302 = { module = "io.github.jan-tennert.supabase:bom", version.ref = "bomVersion" }

@@ -41,6 +41,8 @@ android {
 }
 
 dependencies {
+    implementation(libs.androidx.constraintlayout.compose)
+    implementation(libs.androidx.navigation.compose)
     implementation(platform(libs.bom.v302))
     implementation(libs.github.postgrest.kt)
     implementation(libs.ktor.client.android.v301)
