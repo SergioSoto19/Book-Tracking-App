@@ -2,6 +2,7 @@ plugins {
     alias(libs.plugins.android.application)
     alias(libs.plugins.kotlin.android)
     alias(libs.plugins.kotlin.compose)
+    kotlin("plugin.serialization") version "1.9.0"
 }
 
 android {
@@ -40,7 +41,9 @@ android {
 }
 
 dependencies {
-
+    implementation(platform(libs.bom.v302))
+    implementation(libs.github.postgrest.kt)
+    implementation(libs.ktor.client.android.v301)
     implementation(libs.androidx.core.ktx)
     implementation(libs.androidx.lifecycle.runtime.ktx)
     implementation(libs.androidx.activity.compose)
