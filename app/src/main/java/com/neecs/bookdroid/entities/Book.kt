@@ -1,10 +1,13 @@
 package com.neecs.bookdroid.entities
 
-import kotlinx.serialization.Serializable
+import androidx.room.Entity
+import androidx.room.PrimaryKey
 
-@Serializable
+@Entity(tableName = "Book")
 data class Book(
-    val id: Int,
+    @PrimaryKey(autoGenerate = true)
+    val bookId: Int = 0,
     val title: String,
-    val description : String,
+    val description: String,
+    val image: String
 )
