@@ -1,5 +1,5 @@
 [versions]
-agp = "8.7.2"
+agp = "8.7.3"
 bom = "1.8"
 bomVersion = "3.0.2"
 kotlin = "2.0.0"
