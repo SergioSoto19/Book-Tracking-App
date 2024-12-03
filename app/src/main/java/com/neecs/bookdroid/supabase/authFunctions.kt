@@ -2,6 +2,7 @@ package com.neecs.bookdroid.supabase
 
 import io.github.jan.supabase.auth.auth
 import io.github.jan.supabase.auth.providers.builtin.Email
+import io.github.jan.supabase.auth.user.UserInfo
 import kotlinx.serialization.json.JsonPrimitive
 import kotlinx.serialization.json.buildJsonObject
 
@@ -44,10 +45,14 @@ suspend fun logoutUser() {
     }
 }
 
-suspend fun retrieveUser() {
-    try {
+suspend fun retrieveUser(): UserInfo? {
+    return try {
+        // Recuperar el usuario de la sesión actual
         val user = supabase.auth.retrieveUserForCurrentSession(updateSession = true)
+        println("User retrieved successfully: ${user?.id}")
+        user
     } catch (e: Exception) {
         println("Error retrieving user: ${e.message}")
+        null // Devolver null si ocurre un error
     }
 }
