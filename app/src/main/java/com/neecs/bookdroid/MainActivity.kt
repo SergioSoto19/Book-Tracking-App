@@ -24,7 +24,13 @@ import com.neecs.bookdroid.ui.theme.BookdroidTheme
 import com.neecs.bookdroid.ui.viewmodel.LoginViewModel
 
 import androidx.compose.runtime.collectAsState
+import androidx.lifecycle.viewmodel.compose.viewModel
+import com.neecs.bookdroid.network.ApiService
+import com.neecs.bookdroid.network.RetrofitClient.apiService
+import com.neecs.bookdroid.ui.composables.HomeScreen
 import com.neecs.bookdroid.ui.composables.RegisterScreen
+import com.neecs.bookdroid.ui.viewmodel.HomeViewModel
+import com.neecs.bookdroid.ui.viewmodel.HomeViewModelFactory
 
 class MainActivity : ComponentActivity() {
 
@@ -37,8 +43,7 @@ class MainActivity : ComponentActivity() {
 
             val navController = rememberNavController() // Controlador de navegación
 
-            BookdroidTheme(darkTheme = true){
-
+            BookdroidTheme(darkTheme = true) {
 
                 // Configuración del NavHost y las pantallas de la app
                 NavHost(
@@ -62,8 +67,11 @@ class MainActivity : ComponentActivity() {
                                 navController.navigate("register")
                             },
                             onLogin = {
-                                // Navegar a "home" después de iniciar sesión
-                                navController.navigate("home")
+                                // Aquí se navega a la pantalla "home" cuando se inicia sesión
+                                navController.navigate("home") {
+                                    // Eliminar la pantalla de login para que no se pueda regresar
+
+                                }
                             }
                         )
                     }
@@ -84,32 +92,33 @@ class MainActivity : ComponentActivity() {
 
                     // Pantalla de inicio (Home)
                     composable("home") {
+                        // Obtén el ViewModel aquí
+
+
+                        val homeViewModel: HomeViewModel = viewModel(factory = HomeViewModelFactory(apiService))
+
                         HomeScreen(
-                            onLogout = {
-                                // Regresar a la pantalla de inicio de sesión
-                                navController.popBackStack("login", false)
+                            viewModel = homeViewModel, // Pasa el ViewModel aquí
+                            onNavigateToLibrary = {
+                                // Lógica para navegar a la pantalla de biblioteca
+                                navController.navigate("library")
+                            },
+                            onNavigateToExplore = {
+                                // Lógica para navegar a la pantalla de explorar
+                                navController.navigate("explore")
+                            },
+                            onNavigateToHome = {
+                                // Si ya estás en la pantalla de inicio, no necesitas navegar
+                                navController.navigate("home")
                             }
                         )
                     }
+
+
+                    // Pantalla de contraseña olvidada
+
                 }
             }
-        }
-    }
-}
-
-
-@Composable
-fun HomeScreen(onLogout: () -> Unit) {
-    // Pantalla de inicio de sesión después de un inicio exitoso
-    Scaffold(
-        modifier = Modifier.fillMaxSize()
-    ) { innerPadding ->
-        // Contenido de la pantalla de inicio
-        Button(
-            onClick = onLogout,
-            modifier = Modifier.padding(innerPadding)
-        ) {
-            Text("Logout")
         }
     }
 }
