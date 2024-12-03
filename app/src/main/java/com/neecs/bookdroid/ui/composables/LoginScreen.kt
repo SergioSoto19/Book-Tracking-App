@@ -122,7 +122,9 @@ fun LoginScreen(
 
         // Botón "Iniciar sesión"
         Button(
-            onClick = onLogin,
+            onClick = {
+                onLogin()  // Asegúrate de que esta llamada está correctamente definida
+            },
             modifier = Modifier
                 .fillMaxWidth()
                 .constrainAs(loginButton) {
