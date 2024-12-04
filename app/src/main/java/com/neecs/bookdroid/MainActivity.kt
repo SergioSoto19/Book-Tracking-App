@@ -4,134 +4,125 @@ import android.os.Bundle
 import androidx.activity.ComponentActivity
 import androidx.activity.compose.setContent
 import androidx.activity.viewModels
-import androidx.compose.foundation.layout.fillMaxSize
-import androidx.compose.foundation.layout.padding
-import androidx.compose.material3.Button
-import androidx.compose.material3.Scaffold
-import androidx.compose.material3.Text
-import androidx.compose.runtime.Composable
-import androidx.compose.runtime.LaunchedEffect
-import androidx.compose.runtime.getValue
-import androidx.compose.runtime.mutableStateOf
-import androidx.compose.runtime.remember
-import androidx.compose.runtime.setValue
-import androidx.compose.ui.Modifier
+import androidx.compose.runtime.collectAsState
+import androidx.lifecycle.viewmodel.compose.viewModel
+import androidx.navigation.NavType
 import androidx.navigation.compose.NavHost
 import androidx.navigation.compose.composable
 import androidx.navigation.compose.rememberNavController
-import com.neecs.bookdroid.ui.composables.LoginScreen
-import com.neecs.bookdroid.ui.theme.BookdroidTheme
-import com.neecs.bookdroid.ui.viewmodel.LoginViewModel
-
-import androidx.compose.runtime.collectAsState
-import androidx.compose.ui.tooling.preview.Preview
-import androidx.lifecycle.viewmodel.compose.viewModel
-import com.neecs.bookdroid.network.ApiService
+import androidx.navigation.navArgument
+import com.google.gson.Gson
+import com.neecs.bookdroid.entities.BookDto
 import com.neecs.bookdroid.network.RetrofitClient.apiService
+import com.neecs.bookdroid.supabase.saveBook
+import com.neecs.bookdroid.ui.composables.BookDetailsScreen
 import com.neecs.bookdroid.ui.composables.HomeScreen
+import com.neecs.bookdroid.ui.composables.LoginScreen
 import com.neecs.bookdroid.ui.composables.RegisterScreen
+import com.neecs.bookdroid.ui.theme.BookdroidTheme
 import com.neecs.bookdroid.ui.viewmodel.HomeViewModel
 import com.neecs.bookdroid.ui.viewmodel.HomeViewModelFactory
+import com.neecs.bookdroid.ui.viewmodel.LoginViewModel
+import kotlinx.coroutines.launch
 
 class MainActivity : ComponentActivity() {
 
-    private val loginViewModel: LoginViewModel by viewModels() // Inicializa el ViewModel
+    private val loginViewModel: LoginViewModel by viewModels()
+    private val gson = Gson() // Inicializamos Gson para serialización/deserialización
 
     override fun onCreate(savedInstanceState: Bundle?) {
         super.onCreate(savedInstanceState)
         setContent {
-            val loginState = loginViewModel.uiState.collectAsState() // Obtenemos el estado actual de login
-
-            val navController = rememberNavController() // Controlador de navegación
+            val navController = rememberNavController()
 
             BookdroidTheme(darkTheme = true) {
-
-                // Configuración del NavHost y las pantallas de la app
                 NavHost(
                     navController = navController,
-                    startDestination = "login" // Pantalla inicial
+                    startDestination = "login"
                 ) {
-                    // Pantalla de inicio de sesión
+                    // Pantalla de Login
                     composable("login") {
                         LoginScreen(
-                            uiState = loginState.value, // Estado actual del Login
-                            onFirstNameChange = loginViewModel::onFirstNameChange,
-                            onLastNameChange = loginViewModel::onLastNameChange,
+                            uiState = loginViewModel.uiState.collectAsState().value,
                             onUsernameOrEmailChange = loginViewModel::onUsernameOrEmailChange,
                             onPasswordChange = loginViewModel::onPasswordChange,
-                            onForgotPassword = {
-                                // Aquí defines la navegación o acción para "¿Olvidaste la contraseña?"
-                                navController.navigate("forgotPassword")
+                            onForgotPassword = { println("Forgot password clicked") },
+                            onLogin = { email, password ->
+                                loginViewModel.login(
+                                    onSuccess = { navController.navigate("home") },
+                                    onError = { errorMessage -> println("Login failed: $errorMessage") }
+                                )
                             },
-                            onRegister = {
-                                // Aquí defines la navegación o acción para "Registrarse"
-                                navController.navigate("register")
-                            },
-                            onLogin = {
-                                // Aquí se navega a la pantalla "home" cuando se inicia sesión
-                                navController.navigate("home") {
-                                    // Eliminar la pantalla de login para que no se pueda regresar
-
-                                }
-                            }
+                            onRegister = { navController.navigate("register") }
                         )
                     }
 
-                    // Pantalla de registro (Ruta "register")
+                    // Pantalla de Registro
                     composable("register") {
                         RegisterScreen(
-                            onRegister = {
-                                // Lógica para registrar al usuario y navegar a la pantalla "home"
+                            onRegister = { email, password, firstName, lastName ->
+                                println("Registering user: $email, $firstName $lastName")
                                 navController.navigate("home")
                             },
-                            onBackToLogin = {
-                                // Regresar a la pantalla de login
-                                navController.popBackStack("login", false)
-                            }
+                            onBackToLogin = { navController.popBackStack("login", false) }
                         )
                     }
 
-                    // Pantalla de inicio (Home)
+                    // Pantalla Home
                     composable("home") {
-                        // Obtén el ViewModel aquí
-
-
                         val homeViewModel: HomeViewModel = viewModel(factory = HomeViewModelFactory(apiService))
 
                         HomeScreen(
-                            viewModel = homeViewModel, // Pasa el ViewModel aquí
-                            onNavigateToLibrary = {
-                                // Lógica para navegar a la pantalla de biblioteca
-                                navController.navigate("library")
-                            },
-                            onNavigateToExplore = {
-                                // Lógica para navegar a la pantalla de explorar
-                                navController.navigate("explore")
-                            },
-                            onNavigateToHome = {
-                                // Si ya estás en la pantalla de inicio, no necesitas navegar
-                                navController.navigate("home")
+                            viewModel = homeViewModel,
+                            onNavigateToLibrary = { navController.navigate("library") },
+                            onNavigateToExplore = { navController.navigate("explore") },
+                            onNavigateToHome = { navController.navigate("home") },
+                            onBookClick = { book ->
+                                // Serializar el libro como JSON para enviarlo
+                                val bookJson = gson.toJson(book)
+                                navController.navigate("bookDetails/$bookJson")
                             }
                         )
                     }
 
-                   // composable("bookDetails/{bookId}") { backStackEntry ->
-                     //   val bookId = backStackEntry.arguments?.getString("bookId") ?: return@composable
-                       // val book = getBookById(bookId)  // Recuperar el libro usando el ID (este es un ejemplo)
+                    composable(
+                        "bookDetails/{bookJson}",
+                        arguments = listOf(navArgument("bookJson") { type = NavType.StringType })
+                    ) { backStackEntry ->
+                        val bookJson = backStackEntry.arguments?.getString("bookJson")
+                        val book = try {
+                            gson.fromJson(bookJson, BookDto::class.java)
+                        } catch (e: Exception) {
+                            e.printStackTrace()
+                            null
+                        }
 
-                        //BookDetailsScreen(
-                          //  book = book,
-                            //onAddToList = { /* Agregar a la lista */ }
-                        //)
-                    //}
-
-                    // pantalla de detalles del libro
-
-                    // Pantalla de contraseña olvidada
+                        if (book != null) {
+                            BookDetailsScreen(
+                                book = book,
+                                onAddToList = {
+                                    kotlinx.coroutines.GlobalScope.launch {
+                                        try {
+                                            saveBook(book.title, book.coverUrl) // Reemplaza con el userId real
+                                            println("${book.title} guardado exitosamente")
+                                        } catch (e: Exception) {
+                                            println("Error al guardar el libro: ${e.message}")
+                                        }
+                                    }
+                                },
+                                onBack = {
+                                    navController.popBackStack()
+                                }
+                            )
+                        } else {
+                            // Si `book` es nulo, regresa al usuario a la pantalla anterior
+                            println("Error: El libro no es válido o el JSON está corrupto")
+                            navController.popBackStack()
+                        }
+                    }
 
                 }
             }
         }
     }
 }
-

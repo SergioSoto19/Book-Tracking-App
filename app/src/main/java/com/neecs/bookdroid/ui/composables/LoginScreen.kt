@@ -9,12 +9,7 @@ import androidx.compose.foundation.layout.fillMaxSize
 import androidx.compose.foundation.layout.fillMaxWidth
 import androidx.compose.foundation.layout.height
 import androidx.compose.foundation.layout.padding
-import androidx.compose.foundation.layout.size
-import androidx.compose.foundation.shape.RoundedCornerShape
-import androidx.compose.material.icons.Icons
-import androidx.compose.material.icons.filled.Person
 import androidx.compose.material3.Button
-import androidx.compose.material3.Icon
 import androidx.compose.material3.MaterialTheme
 import androidx.compose.material3.Text
 import androidx.compose.material3.TextField
@@ -22,133 +17,63 @@ import androidx.compose.runtime.Composable
 
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.text.input.PasswordVisualTransformation
-import androidx.compose.ui.tooling.preview.Preview
 import androidx.compose.ui.unit.dp
-import androidx.constraintlayout.compose.ConstraintLayout
 import com.neecs.bookdroid.data.model.LoginUiState
 
 
 @Composable
 fun LoginScreen(
     uiState: LoginUiState,
-    onFirstNameChange: (String) -> Unit,
-    onLastNameChange: (String) -> Unit,
     onUsernameOrEmailChange: (String) -> Unit,
     onPasswordChange: (String) -> Unit,
-    onLogin: () -> Unit,
+    onLogin: (String, String) -> Unit, // Cambiar a aceptar email y password
     onForgotPassword: () -> Unit,
     onRegister: () -> Unit
 ) {
-    ConstraintLayout(
+    Column(
         modifier = Modifier
             .fillMaxSize()
-            .padding(16.dp)
+            .padding(16.dp),
+        verticalArrangement = Arrangement.Center
     ) {
-        // Definimos las referencias de los elementos
-        val (icon, usernameField, passwordField, forgotPassword, register, loginButton) = createRefs()
-
-        // Ícono centrado en la parte superior
-        Icon(
-            imageVector = Icons.Default.Person,
-            contentDescription = "App Logo",
-            modifier = Modifier
-                .size(80.dp)
-                .constrainAs(icon) {
-                    top.linkTo(parent.top, margin = 80.dp)
-                    start.linkTo(parent.start)
-                    end.linkTo(parent.end)
-                },
-            tint = MaterialTheme.colorScheme.primary
-        )
-
-        // Campo de texto para el nombre de usuario
         TextField(
             value = uiState.usernameOrEmail,
             onValueChange = onUsernameOrEmailChange,
-            label = { Text("Nombre de usuario") },
-            shape = RoundedCornerShape(8.dp),
-            modifier = Modifier
-                .fillMaxWidth()
-                .constrainAs(usernameField) {
-                    top.linkTo(icon.bottom, margin = 40.dp)
-                    start.linkTo(parent.start)
-                    end.linkTo(parent.end)
-                }
+            label = { Text("Correo electrónico") },
+            modifier = Modifier.fillMaxWidth()
         )
-
-        // Campo de texto para la contraseña
+        Spacer(modifier = Modifier.height(16.dp))
         TextField(
             value = uiState.password,
             onValueChange = onPasswordChange,
             label = { Text("Contraseña") },
-            shape = RoundedCornerShape(8.dp),
-            modifier = Modifier
-                .fillMaxWidth()
-                .constrainAs(passwordField) {
-                    top.linkTo(usernameField.bottom, margin = 16.dp)
-                    start.linkTo(parent.start)
-                    end.linkTo(parent.end)
-                },
-            visualTransformation = PasswordVisualTransformation() // Oculta la contraseña
+            modifier = Modifier.fillMaxWidth(),
+            visualTransformation = PasswordVisualTransformation()
         )
-
-        // Enlace "¿Olvidaste la contraseña?"
-        Text(
-            text = "¿Olvidaste la contraseña?",
-            color = MaterialTheme.colorScheme.primary,
-            modifier = Modifier
-                .clickable(onClick = onForgotPassword)
-                .padding(8.dp)
-                .constrainAs(forgotPassword) {
-                    top.linkTo(passwordField.bottom, margin = 35.dp)
-                    start.linkTo(parent.start)
-                    end.linkTo(parent.end) // Opcional, centra horizontalmente
-                }
-        )
-
-        // Enlace "Registrarse"
-        Text(
-            text = "Registrarse",
-            color = MaterialTheme.colorScheme.primary,
-            modifier = Modifier
-                .clickable(onClick = onRegister) // Llama al callback para navegar
-                .padding(8.dp)
-                .constrainAs(register) {
-                    top.linkTo(forgotPassword.bottom, margin = 25.dp) // Colocado debajo de "¿Olvidaste la contraseña?"
-                    start.linkTo(parent.start)
-                    end.linkTo(parent.end) // Opcional, centra horizontalmente
-                }
-        )
-
-        // Botón "Iniciar sesión"
+        Spacer(modifier = Modifier.height(16.dp))
         Button(
             onClick = {
-                onLogin()  // Asegúrate de que esta llamada está correctamente definida
+                onLogin(uiState.usernameOrEmail, uiState.password) // Proveer valores
             },
-            modifier = Modifier
-                .fillMaxWidth()
-                .constrainAs(loginButton) {
-                    top.linkTo(forgotPassword.bottom, margin = 100.dp)
-                    start.linkTo(parent.start)
-                    end.linkTo(parent.end)
-                }
+            modifier = Modifier.fillMaxWidth()
         ) {
-            Text("Iniciar sesión")
+            Text("Iniciar Sesión")
         }
+        Spacer(modifier = Modifier.height(16.dp))
+        Text(
+            text = "¿Olvidaste tu contraseña?",
+            modifier = Modifier.clickable(onClick = onForgotPassword),
+            color = MaterialTheme.colorScheme.primary
+        )
+        Spacer(modifier = Modifier.height(8.dp))
+        Text(
+            text = "¿No tienes cuenta? Regístrate",
+            modifier = Modifier.clickable(onClick = onRegister),
+            color = MaterialTheme.colorScheme.primary
+        )
     }
 }
 
-@Preview(showBackground = true)
-@Composable
-fun LoginScreenPreview() {
-    LoginScreen(
-        uiState = LoginUiState(),
-        onFirstNameChange = {},
-        onLastNameChange = {},
-        onUsernameOrEmailChange = {},
-        onPasswordChange = {},
-        onLogin = {},
-        onForgotPassword = {},
-        onRegister = {}
-    )
-}
+
+
+

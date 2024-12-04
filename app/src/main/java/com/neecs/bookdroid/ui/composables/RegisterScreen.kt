@@ -15,24 +15,20 @@ import androidx.compose.runtime.setValue
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.text.font.FontWeight
 import androidx.compose.ui.text.input.PasswordVisualTransformation
-import androidx.compose.ui.unit.dp
-import androidx.constraintlayout.compose.ConstraintLayout
-
 import androidx.compose.ui.tooling.preview.Preview
+import androidx.compose.ui.unit.dp
 import androidx.compose.ui.unit.sp
-
+import androidx.constraintlayout.compose.ConstraintLayout
 
 @Composable
 fun RegisterScreen(
-    onRegister: () -> Unit, // Lógica para registrar al usuario
+    onRegister: (String, String, String, String) -> Unit, // Lógica para registrar al usuario
     onBackToLogin: () -> Unit // Lógica para volver a la pantalla de login
 ) {
-    var username by remember { mutableStateOf("") }
     var firstName by remember { mutableStateOf("") }
     var lastName by remember { mutableStateOf("") }
     var email by remember { mutableStateOf("") }
     var password by remember { mutableStateOf("") }
-    var confirmPassword by remember { mutableStateOf("") }
 
     ConstraintLayout(
         modifier = Modifier
@@ -40,14 +36,13 @@ fun RegisterScreen(
             .padding(16.dp)
     ) {
         // IDs para los elementos
-        val (title, usernameField, firstNameField, lastNameField, emailField, passwordField, confirmPasswordField, registerButton, backButton) = createRefs()
-
+        val (title, firstNameField, lastNameField, emailField, passwordField, registerButton, backButton) = createRefs()
 
         // Título
         Text(
             text = "Registrar",
-            fontSize = 34.sp, // Tamaño del texto
-            fontWeight = FontWeight.Bold, // Aplicar negrita
+            fontSize = 34.sp,
+            fontWeight = FontWeight.Bold,
             modifier = Modifier.constrainAs(title) {
                 top.linkTo(parent.top, margin = 32.dp)
                 start.linkTo(parent.start)
@@ -55,32 +50,19 @@ fun RegisterScreen(
             }
         )
 
-        // Campo de nombre de usuario
-        // Campo de nombre de usuario
-        TextField(
-            value = username,
-            onValueChange = { username = it },
-            label = { Text("Nombre de usuario") },
-            modifier = Modifier.constrainAs(usernameField) {
-                top.linkTo(title.bottom, margin = 24.dp) // Separación debajo del título
-                start.linkTo(parent.start)
-                end.linkTo(parent.end)
-            }
-        )
-
-
         // Campo de nombre
         TextField(
             value = firstName,
             onValueChange = { firstName = it },
             label = { Text("Nombre") },
             modifier = Modifier.constrainAs(firstNameField) {
-                top.linkTo(usernameField.bottom, margin = 24.dp)
+                top.linkTo(title.bottom, margin = 24.dp)
                 start.linkTo(parent.start)
                 end.linkTo(parent.end)
             }
         )
 
+        // Campo de apellido
         TextField(
             value = lastName,
             onValueChange = { lastName = it },
@@ -92,6 +74,7 @@ fun RegisterScreen(
             }
         )
 
+        // Campo de correo electrónico
         TextField(
             value = email,
             onValueChange = { email = it },
@@ -103,6 +86,7 @@ fun RegisterScreen(
             }
         )
 
+        // Campo de contraseña
         TextField(
             value = password,
             onValueChange = { password = it },
@@ -115,23 +99,13 @@ fun RegisterScreen(
             }
         )
 
-        TextField(
-            value = confirmPassword,
-            onValueChange = { confirmPassword = it },
-            label = { Text("Confirmar contraseña") },
-            visualTransformation = PasswordVisualTransformation(),
-            modifier = Modifier.constrainAs(confirmPasswordField) {
-                top.linkTo(passwordField.bottom, margin = 24.dp)
-                start.linkTo(parent.start)
-                end.linkTo(parent.end)
-            }
-        )
-
         // Botón para registrar
         Button(
-            onClick = onRegister,
+            onClick = {
+                onRegister(firstName, lastName, email, password)
+            },
             modifier = Modifier.constrainAs(registerButton) {
-                top.linkTo(confirmPasswordField.bottom, margin = 24.dp)
+                top.linkTo(passwordField.bottom, margin = 24.dp)
                 start.linkTo(parent.start)
                 end.linkTo(parent.end)
             }
@@ -154,11 +128,15 @@ fun RegisterScreen(
     }
 }
 
-@Preview(showBackground = true, showSystemUi = false)
+@Preview(showBackground = true)
 @Composable
 fun PreviewRegisterScreen() {
     RegisterScreen(
-        onRegister = { /* Acción de registro simulada */ },
-        onBackToLogin = { /* Acción para volver simulada */ }
+        onRegister = { firstName, lastName, email, password ->
+            println("Registro: Nombre: $firstName, Apellido: $lastName, Email: $email, Contraseña: $password")
+        },
+        onBackToLogin = {
+            println("Regresar al login")
+        }
     )
 }

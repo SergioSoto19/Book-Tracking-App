@@ -19,13 +19,14 @@ import androidx.compose.ui.text.font.FontWeight
 import androidx.compose.ui.text.style.TextAlign
 import androidx.compose.ui.unit.dp
 import androidx.compose.ui.unit.sp
+import coil.compose.rememberAsyncImagePainter
 import coil.compose.rememberImagePainter
 import com.neecs.bookdroid.entities.BookDto
 
 
 
 @Composable
-fun BookDetailsScreen(book: BookDto, onAddToList: () -> Unit) {
+fun BookDetailsScreen(book: BookDto, onAddToList: () -> Unit, onBack: () -> Unit) {
     Column(
         modifier = Modifier
             .fillMaxWidth()
@@ -34,7 +35,7 @@ fun BookDetailsScreen(book: BookDto, onAddToList: () -> Unit) {
     ) {
         // Imagen del libro
         Image(
-            painter = rememberImagePainter(book.coverUrl),
+            painter = rememberAsyncImagePainter(book.coverUrl),
             contentDescription = book.title,
             modifier = Modifier
                 .size(200.dp)
@@ -62,8 +63,19 @@ fun BookDetailsScreen(book: BookDto, onAddToList: () -> Unit) {
         ) {
             Text(text = "Agregar a mi lista")
         }
+
+        Spacer(modifier = Modifier.height(16.dp))
+
+        // Botón para regresar
+        Button(
+            onClick = onBack, // Llama al callback de "volver"
+            modifier = Modifier.fillMaxWidth()
+        ) {
+            Text(text = "Volver")
+        }
     }
 }
+
 
 //@Preview(showBackground = true)
 //@Composable

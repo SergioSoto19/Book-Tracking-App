@@ -2,6 +2,8 @@
 agp = "8.7.3"
 bom = "1.8"
 bomVersion = "3.0.2"
+coilCompose = "3.0.4"
+coilNetworkOkhttp = "3.0.4"
 converterGsonVersion = "2.9.0"
 kotlin = "2.0.0"
 coreKtx = "1.10.1"
@@ -27,8 +29,11 @@ androidx-core-ktx = { group = "androidx.core", name = "core-ktx", version.ref = 
 androidx-room-compiler = { module = "androidx.room:room-compiler", version.ref = "roomCompiler" }
 androidx-room-ktx = { module = "androidx.room:room-ktx", version.ref = "roomKtx" }
 androidx-room-runtime = { module = "androidx.room:room-runtime", version.ref = "roomRuntime" }
+auth-kt = { module = "io.github.jan-tennert.supabase:auth-kt" }
 bom = { module = "io.github.jan-tennert.supabase:bom", version.ref = "bom" }
 bom-v302 = { module = "io.github.jan-tennert.supabase:bom", version.ref = "bomVersion" }
+coil-compose = { module = "io.coil-kt.coil3:coil-compose", version.ref = "coilCompose" }
+coil-network-okhttp = { module = "io.coil-kt.coil3:coil-network-okhttp", version.ref = "coilNetworkOkhttp" }
 github-postgrest-kt = { module = "io.github.jan-tennert.supabase:postgrest-kt" }
 junit = { group = "junit", name = "junit", version.ref = "junit" }
 androidx-junit = { group = "androidx.test.ext", name = "junit", version.ref = "junitVersion" }
@@ -46,6 +51,7 @@ androidx-material3 = { group = "androidx.compose.material3", name = "material3" 
 ktor-client-android = { module = "io.ktor:ktor-client-android", version.ref = "ktorClientAndroid" }
 ktor-client-android-v301 = { module = "io.ktor:ktor-client-android", version.ref = "ktorClientAndroidVersion" }
 postgrest-kt = { module = "io.github.jan-tennert.supabase:postgrest-kt" }
+realtime-kt = { module = "io.github.jan-tennert.supabase:realtime-kt" }
 retrofit = { module = "com.squareup.retrofit2:retrofit", version.ref = "retrofit" }
 retrofit2-converter-gson = { module = "com.squareup.retrofit2:converter-gson", version.ref = "converterGsonVersion" }
 supabase-postgrest-kt = { module = "io.github.jan-tennert.supabase:postgrest-kt" }

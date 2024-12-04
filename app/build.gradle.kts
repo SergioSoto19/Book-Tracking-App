@@ -42,6 +42,8 @@ android {
 }
 
 dependencies {
+    implementation(libs.coil.compose)
+    implementation(libs.coil.network.okhttp)
     implementation (libs.retrofit2.converter.gson)
     implementation (libs.retrofit)
     implementation(libs.androidx.room.ktx)
@@ -50,6 +52,8 @@ dependencies {
     implementation(libs.androidx.constraintlayout.compose)
     implementation(libs.androidx.navigation.compose)
     implementation(platform(libs.bom.v302))
+    implementation(libs.auth.kt)
+    implementation(libs.realtime.kt)
     implementation(libs.github.postgrest.kt)
     implementation(libs.ktor.client.android.v301)
     implementation(libs.androidx.core.ktx)

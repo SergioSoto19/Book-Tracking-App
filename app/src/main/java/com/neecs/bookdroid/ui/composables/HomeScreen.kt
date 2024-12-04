@@ -19,8 +19,10 @@ import androidx.compose.foundation.lazy.grid.LazyVerticalGrid
 import androidx.compose.foundation.lazy.grid.items
 import androidx.compose.foundation.shape.CircleShape
 import androidx.compose.foundation.shape.RoundedCornerShape
+import androidx.compose.material3.Button
 import androidx.compose.material3.Icon
 import androidx.compose.material3.IconButton
+import androidx.compose.material3.MaterialTheme
 import androidx.compose.material3.Text
 import androidx.compose.material3.TextField
 import androidx.compose.runtime.Composable
@@ -38,13 +40,18 @@ import androidx.compose.ui.text.style.TextAlign
 import androidx.compose.ui.tooling.preview.Preview
 import androidx.compose.ui.unit.dp
 import androidx.compose.ui.unit.sp
+import coil.compose.rememberAsyncImagePainter
 import com.neecs.bookdroid.R
 import coil.compose.rememberImagePainter
 import com.neecs.bookdroid.entities.BookDto
 import com.neecs.bookdroid.entities.BookResponse
 import com.neecs.bookdroid.network.ApiService
+import com.neecs.bookdroid.supabase.saveBook
 import com.neecs.bookdroid.ui.viewmodel.HomeViewModel
-
+import kotlinx.coroutines.CoroutineScope
+import kotlinx.coroutines.DelicateCoroutinesApi
+import kotlinx.coroutines.Dispatchers
+import kotlinx.coroutines.launch
 
 
 @Composable
@@ -52,41 +59,40 @@ fun HomeScreen(
     viewModel: HomeViewModel,
     onNavigateToLibrary: () -> Unit,
     onNavigateToExplore: () -> Unit,
-    onNavigateToHome: () -> Unit
+    onNavigateToHome: () -> Unit,
+    onBookClick: (BookDto) -> Unit // Callback acepta el objeto completo
 ) {
     Column(
         modifier = Modifier.fillMaxSize()
     ) {
-        // Barra superior
         TopBar(
-            onSearch = { query ->
-                viewModel.searchBooks(query)  // Llamamos al ViewModel para buscar libros
-            },
+            onSearch = { query -> viewModel.searchBooks(query) },
             modifier = Modifier
-                .fillMaxWidth() // La barra superior ocupa todo el ancho
-                .height(56.dp)  // Altura de la barra
+                .fillMaxWidth()
+                .height(56.dp)
         )
 
-        // Catálogo de libros
         BookCatalog(
             books = viewModel.books.collectAsState().value,
             modifier = Modifier
-                .weight(1f) // Ocupa el espacio restante
-                .fillMaxWidth()
-
+                .weight(1f)
+                .fillMaxWidth(),
+            onBookClick = onBookClick // Pasar el objeto completo al callback
         )
 
-        // Barra inferior
         BottomBar(
             onNavigateToLibrary = onNavigateToLibrary,
             onNavigateToExplore = onNavigateToExplore,
             onNavigateToHome = onNavigateToHome,
             modifier = Modifier
-                .fillMaxWidth() // La barra inferior ocupa todo el ancho
-                .height(56.dp) // Altura de la barra
+                .fillMaxWidth()
+                .height(56.dp)
         )
     }
 }
+
+
+
 
 
 @Composable
@@ -136,42 +142,52 @@ fun TopBar(onSearch: (String) -> Unit, modifier: Modifier = Modifier) {
         }
     }
 }
+
+
 @Composable
-fun BookCatalog(books: List<BookDto>, modifier: Modifier = Modifier) {
+fun BookCatalog(
+    books: List<BookDto>,
+    modifier: Modifier = Modifier,
+    onBookClick: (BookDto) -> Unit // Callback espera un objeto de tipo `BookDto`
+) {
     LazyVerticalGrid(
-        columns = GridCells.Fixed(3), // Tres columnas
+        columns = GridCells.Fixed(3),
         contentPadding = PaddingValues(8.dp),
         modifier = modifier.fillMaxSize()
     ) {
         items(books) { book ->
-            BookItem(book = book)  // Muestra cada libro en la cuadrícula
+            BookItem(book = book, onClick = { onBookClick(book) }) // Pasar el objeto `BookDto` al callback
         }
     }
 }
 
 
+
+
+
 @Composable
-fun BookItem(book: BookDto) {
+fun BookItem(book: BookDto, onClick: () -> Unit) {
     Column(
         modifier = Modifier
             .padding(8.dp)
             .fillMaxWidth()
-            .clickable {
-                // Navegar a la pantalla de detalles del libro
-              //  navController.navigate("bookDetails/${book.id}")  // Usamos el ID del libro para navegar
-            },
+            .clickable { onClick() },
         horizontalAlignment = Alignment.CenterHorizontally
     ) {
-        // Imagen del libro desde la URL
         Image(
-            painter = rememberImagePainter(book.coverUrl),
+            painter = rememberAsyncImagePainter(book.coverUrl),
             contentDescription = book.title,
             modifier = Modifier
                 .size(100.dp)
                 .clip(RoundedCornerShape(8.dp))
         )
+        Text(text = book.title, maxLines = 2, textAlign = TextAlign.Center)
     }
 }
+
+
+
+
 
 @Composable
 fun BottomBar(
@@ -228,9 +244,11 @@ fun PreviewHomeScreen() {
         viewModel = fakeViewModel,
         onNavigateToLibrary = { /* Acción de prueba */ },
         onNavigateToExplore = { /* Acción de prueba */ },
-        onNavigateToHome = { /* Acción de prueba */ }
+        onNavigateToHome = { /* Acción de prueba */ },
+        onBookClick = { /* Acción de prueba para el click de un libro */ }
     )
 }
+
 
 // Fake ApiService para proporcionar datos simulados
 class FakeApiService : ApiService {
@@ -239,3 +257,84 @@ class FakeApiService : ApiService {
         return BookResponse(listOf(/* Lista de libros simulados */))
     }
 }
+
+@Composable
+fun BookDetailsScreen(
+    book: BookDto,
+    userId: String,
+    onBack: () -> Unit
+) {
+    var saveMessage by remember { mutableStateOf("") } // Para mostrar mensajes de éxito o error
+    var isSaving by remember { mutableStateOf(false) } // Para mostrar estado de guardado
+
+    Column(
+        modifier = Modifier
+            .fillMaxSize()
+            .padding(16.dp),
+        horizontalAlignment = Alignment.CenterHorizontally,
+        verticalArrangement = Arrangement.Center
+    ) {
+        // Mostrar imagen del libro
+        Image(
+            painter = rememberAsyncImagePainter(book.coverUrl),
+            contentDescription = book.title,
+            modifier = Modifier.size(200.dp)
+        )
+        Spacer(modifier = Modifier.height(16.dp))
+
+        // Título del libro
+        Text(
+            text = book.title,
+            style = MaterialTheme.typography.titleLarge,
+            textAlign = TextAlign.Center
+        )
+        Spacer(modifier = Modifier.height(16.dp))
+
+        // Botón para guardar el libro
+        Button(
+            onClick = {
+                isSaving = true
+                CoroutineScope(Dispatchers.IO).launch {
+                    try {
+                        saveBook(book.title, book.coverUrl) // Guardar libro
+                        saveMessage = "Libro guardado exitosamente"
+                    } catch (e: Exception) {
+                        saveMessage = "Error al guardar el libro: ${e.message}"
+                    } finally {
+                        isSaving = false
+                    }
+                }
+            },
+            modifier = Modifier.fillMaxWidth(),
+            enabled = !isSaving // Desactivar botón mientras se guarda
+        ) {
+            Text(if (isSaving) "Guardando..." else "Guardar libro")
+        }
+
+        Spacer(modifier = Modifier.height(16.dp))
+
+        // Mostrar mensaje de éxito o error
+        if (saveMessage.isNotEmpty()) {
+            Text(
+                text = saveMessage,
+                color = if (saveMessage.contains("exitosamente")) Color.Green else Color.Red,
+                style = MaterialTheme.typography.bodyMedium
+            )
+        }
+
+        Spacer(modifier = Modifier.height(16.dp))
+
+        // Botón para volver
+        Button(
+            onClick = onBack,
+            modifier = Modifier.fillMaxWidth()
+        ) {
+            Text("Volver")
+        }
+    }
+}
+
+
+
+
+
