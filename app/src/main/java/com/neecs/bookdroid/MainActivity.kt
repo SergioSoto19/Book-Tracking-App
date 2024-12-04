@@ -4,51 +4,40 @@ import android.os.Bundle
 import androidx.activity.ComponentActivity
 import androidx.activity.compose.setContent
 import androidx.activity.viewModels
-import androidx.compose.foundation.layout.Arrangement
-import androidx.compose.foundation.layout.Column
-import androidx.compose.foundation.layout.fillMaxSize
-import androidx.compose.foundation.layout.padding
-import androidx.compose.material3.Button
-import androidx.compose.material3.Scaffold
 import androidx.compose.material3.Text
-import androidx.compose.runtime.Composable
-import androidx.compose.runtime.collectAsState
-import androidx.compose.runtime.getValue
-import androidx.compose.runtime.mutableStateOf
-import androidx.compose.runtime.remember
-import androidx.compose.runtime.setValue
-import androidx.compose.ui.Modifier
-import androidx.compose.ui.unit.dp
-import androidx.navigation.compose.NavHost
-import androidx.navigation.compose.composable
-import androidx.navigation.compose.rememberNavController
-import com.neecs.bookdroid.ui.composables.LoginScreen
-import com.neecs.bookdroid.ui.theme.BookdroidTheme
-import com.neecs.bookdroid.ui.viewmodel.LoginViewModel
-
 import androidx.compose.runtime.collectAsState
 import androidx.compose.ui.tooling.preview.Preview
 import androidx.lifecycle.viewmodel.compose.viewModel
+import androidx.navigation.NavType
+import androidx.navigation.compose.NavHost
+import androidx.navigation.compose.composable
+import androidx.navigation.compose.rememberNavController
+import androidx.navigation.navArgument
+import com.google.gson.Gson
+import com.neecs.bookdroid.entities.BookDto
 import com.neecs.bookdroid.network.ApiService
 import com.neecs.bookdroid.network.RetrofitClient.apiService
+
+import com.neecs.bookdroid.ui.composables.BookDetailsScreen
 import com.neecs.bookdroid.ui.composables.HomeScreen
+import com.neecs.bookdroid.ui.composables.LoginScreen
 import com.neecs.bookdroid.ui.composables.RegisterScreen
+import com.neecs.bookdroid.ui.theme.BookdroidTheme
 import com.neecs.bookdroid.ui.viewmodel.HomeViewModel
 import com.neecs.bookdroid.ui.viewmodel.HomeViewModelFactory
+import com.neecs.bookdroid.ui.viewmodel.LoginViewModel
 
 class MainActivity : ComponentActivity() {
 
     private val loginViewModel: LoginViewModel by viewModels()
+    private val gson = Gson() // Inicializamos Gson
 
     override fun onCreate(savedInstanceState: Bundle?) {
         super.onCreate(savedInstanceState)
         setContent {
-
-            val navController = rememberNavController() // Controlador de navegación
+            val navController = rememberNavController()
 
             BookdroidTheme(darkTheme = true) {
-
-                // Configuración del NavHost y las pantallas de la app
                 NavHost(
                     navController = navController,
                     startDestination = "login"
@@ -62,7 +51,7 @@ class MainActivity : ComponentActivity() {
                             onForgotPassword = {
                                 println("Forgot password clicked")
                             },
-                            onLogin = { email, password -> // Proveer email y password
+                            onLogin = { email, password ->
                                 loginViewModel.login(
                                     onSuccess = {
                                         println("Login successful!")
@@ -74,54 +63,74 @@ class MainActivity : ComponentActivity() {
                                 )
                             },
                             onRegister = {
-                                // Aquí defines la navegación o acción para "Registrarse"
                                 navController.navigate("register")
                             },
                         )
                     }
 
-
-                    // Pantalla de Inicio (Home)
-                    composable("home") {
-                        // Obtén el ViewModel aquí
-
-
-                        val homeViewModel: HomeViewModel = viewModel(factory = HomeViewModelFactory(apiService))
-
-                        HomeScreen(
-                            viewModel = homeViewModel, // Pasa el ViewModel aquí
-                            onNavigateToLibrary = {
-                                // Lógica para navegar a la pantalla de biblioteca
-                                navController.navigate("library")
-                            },
-                            onNavigateToExplore = {
-                                // Lógica para navegar a la pantalla de explorar
-                                navController.navigate("explore")
-                            },
-                            onNavigateToHome = {
-                                // Si ya estás en la pantalla de inicio, no necesitas navegar
+                    // Pantalla de Registro
+                    composable("register") {
+                        RegisterScreen(
+                            onRegister = { email, password, firstName, lastName ->
+                                println("Registering user: $email, $firstName $lastName")
                                 navController.navigate("home")
+                            },
+                            onBackToLogin = {
+                                navController.popBackStack("login", false)
                             }
                         )
                     }
 
-                   // composable("bookDetails/{bookId}") { backStackEntry ->
-                     //   val bookId = backStackEntry.arguments?.getString("bookId") ?: return@composable
-                       // val book = getBookById(bookId)  // Recuperar el libro usando el ID (este es un ejemplo)
+                    // Pantalla Home
+                    composable("home") {
+                        val homeViewModel: HomeViewModel = viewModel(factory = HomeViewModelFactory(apiService))
 
-                        //BookDetailsScreen(
-                          //  book = book,
-                            //onAddToList = { /* Agregar a la lista */ }
-                        //)
-                    //}
+                        HomeScreen(
+                            viewModel = homeViewModel,
+                            onNavigateToLibrary = { navController.navigate("library") },
+                            onNavigateToExplore = { navController.navigate("explore") },
+                            onNavigateToHome = { navController.navigate("home") },
+                            onBookClick = { bookId ->
+                                navController.navigate("bookDetails/$bookId") // Pasar `bookId` en la navegación
+                            }
+                        )
+                    }
 
-                    // pantalla de detalles del libro
+                    composable(
+                        "bookDetails/{bookId}",
+                        arguments = listOf(navArgument("bookId") { type = NavType.StringType })
+                    ) { backStackEntry ->
+                        val bookId = backStackEntry.arguments?.getString("bookId") ?: return@composable
+                        BookDetailsScreen(
+                            bookId = bookId,
+                            onBack = {
+                                navController.popBackStack()
+                            }
+                        )
+                    }
 
-                    // Pantalla de contraseña olvidada
 
+                    // Pantalla de Detalles del Libro
+                    composable(
+                        "bookDetails/{bookJson}",
+                        arguments = listOf(navArgument("bookJson") { type = NavType.StringType })
+                    ) { backStackEntry ->
+                        // Deserializamos el objeto BookDto
+                        val bookJson = backStackEntry.arguments?.getString("bookJson")
+                        val book = gson.fromJson(bookJson, BookDto::class.java)
+
+                        BookDetailsScreen(
+                            book = book,
+                            onAddToList = {
+                                println("${book.title} añadido a la lista")
+                            },
+                            onBack = {
+                                navController.popBackStack()
+                            }
+                        )
+                    }
                 }
             }
         }
     }
 }
-

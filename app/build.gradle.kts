@@ -42,6 +42,8 @@ android {
 }
 
 dependencies {
+    implementation(libs.coil.compose)
+    implementation(libs.coil.network.okhttp)
     implementation (libs.retrofit2.converter.gson)
     implementation (libs.retrofit)
     implementation(libs.androidx.room.ktx)
