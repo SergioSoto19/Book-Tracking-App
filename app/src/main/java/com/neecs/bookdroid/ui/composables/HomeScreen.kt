@@ -4,18 +4,19 @@ import androidx.compose.foundation.Image
 import androidx.compose.foundation.background
 import androidx.compose.foundation.clickable
 import androidx.compose.foundation.layout.Arrangement
+import androidx.compose.foundation.layout.Box
 import androidx.compose.foundation.layout.Column
+import androidx.compose.foundation.layout.PaddingValues
 import androidx.compose.foundation.layout.Row
 import androidx.compose.foundation.layout.Spacer
-import androidx.compose.foundation.layout.fillMaxHeight
 import androidx.compose.foundation.layout.fillMaxSize
 import androidx.compose.foundation.layout.fillMaxWidth
 import androidx.compose.foundation.layout.height
 import androidx.compose.foundation.layout.padding
 import androidx.compose.foundation.layout.size
-import androidx.compose.foundation.layout.width
-import androidx.compose.foundation.lazy.LazyColumn
-import androidx.compose.foundation.lazy.items
+import androidx.compose.foundation.lazy.grid.GridCells
+import androidx.compose.foundation.lazy.grid.LazyVerticalGrid
+import androidx.compose.foundation.lazy.grid.items
 import androidx.compose.foundation.shape.CircleShape
 import androidx.compose.foundation.shape.RoundedCornerShape
 import androidx.compose.material3.Icon
@@ -23,141 +24,152 @@ import androidx.compose.material3.IconButton
 import androidx.compose.material3.Text
 import androidx.compose.material3.TextField
 import androidx.compose.runtime.Composable
+import androidx.compose.runtime.collectAsState
+import androidx.compose.runtime.getValue
+import androidx.compose.runtime.mutableStateOf
+import androidx.compose.runtime.remember
+import androidx.compose.runtime.setValue
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.draw.clip
 import androidx.compose.ui.graphics.Color
 import androidx.compose.ui.res.painterResource
+import androidx.compose.ui.text.style.TextAlign
 import androidx.compose.ui.tooling.preview.Preview
 import androidx.compose.ui.unit.dp
 import androidx.compose.ui.unit.sp
-import androidx.constraintlayout.compose.ConstraintLayout
 import com.neecs.bookdroid.R
-import com.neecs.bookdroid.data.model.Book
+import coil.compose.rememberImagePainter
+import com.neecs.bookdroid.entities.BookDto
+import com.neecs.bookdroid.entities.BookResponse
+import com.neecs.bookdroid.network.ApiService
+import com.neecs.bookdroid.ui.viewmodel.HomeViewModel
+
+
 
 @Composable
 fun HomeScreen(
+    viewModel: HomeViewModel,
     onNavigateToLibrary: () -> Unit,
     onNavigateToExplore: () -> Unit,
-    onNavigateToHome: () -> Unit,
-    onSearch: (String) -> Unit, // Función para realizar la búsqueda
-    books: List<Book> // Lista de libros obtenida de la API
+    onNavigateToHome: () -> Unit
 ) {
-    ConstraintLayout(
-        modifier = Modifier
-            .fillMaxSize()
-            .background(Color.Black)
+    Column(
+        modifier = Modifier.fillMaxSize()
     ) {
-        val (topBar, bookCatalog, bottomBar) = createRefs()
+        // Barra superior
+        TopBar(
+            onSearch = { query ->
+                viewModel.searchBooks(query)  // Llamamos al ViewModel para buscar libros
+            },
+            modifier = Modifier
+                .fillMaxWidth() // La barra superior ocupa todo el ancho
+                .height(56.dp)  // Altura de la barra
+        )
 
-        // Barra Superior
-        createGuidelineFromTop(0.0f).apply {
-            TopBar(onSearch = onSearch, modifier = Modifier.constrainAs(topBar) {
-                top.linkTo(parent.top)
-                start.linkTo(parent.start)
-                end.linkTo(parent.end)
-            })
-        }
+        // Catálogo de libros
+        BookCatalog(
+            books = viewModel.books.collectAsState().value,
+            modifier = Modifier
+                .weight(1f) // Ocupa el espacio restante
+                .fillMaxWidth()
 
-        // Lista de Libros
-        BookCatalog(books = books, modifier = Modifier.constrainAs(bookCatalog) {
-            top.linkTo(topBar.bottom)
-            start.linkTo(parent.start)
-            end.linkTo(parent.end)
-            bottom.linkTo(bottomBar.top)
-        })
+        )
 
-        // Barra Inferior de Navegación
+        // Barra inferior
         BottomBar(
             onNavigateToLibrary = onNavigateToLibrary,
             onNavigateToExplore = onNavigateToExplore,
             onNavigateToHome = onNavigateToHome,
-            modifier = Modifier.constrainAs(bottomBar) {
-                bottom.linkTo(parent.bottom)
-                start.linkTo(parent.start)
-                end.linkTo(parent.end)
-            }
+            modifier = Modifier
+                .fillMaxWidth() // La barra inferior ocupa todo el ancho
+                .height(56.dp) // Altura de la barra
         )
     }
 }
 
+
 @Composable
 fun TopBar(onSearch: (String) -> Unit, modifier: Modifier = Modifier) {
+    var searchQuery by remember { mutableStateOf("") }
+
     Row(
         modifier = modifier
             .fillMaxWidth()
-            .padding(horizontal = 16.dp)
             .height(56.dp)
             .background(Color(0xFF212121)),
-
         verticalAlignment = Alignment.CenterVertically,
     ) {
-        // Campo de búsqueda
-        TextField(
-            value = "",
-            onValueChange = { query -> onSearch(query) },
-            label = { Text("Buscar libros...") },
+        // Campo de búsqueda envuelto en un Box con margen
+        Box(
             modifier = Modifier
-                .weight(1f)
-                .padding(8.dp),
-            singleLine = true
-        )
+                .weight(1f)  // Hace que el Box ocupe el espacio restante
+                .padding(start = 18.dp, end = 16.dp) // Espaciado lateral para el campo de búsqueda
+                .padding(top = 8.dp, bottom = 8.dp) // Margen superior e inferior para separar el TextField de los bordes de la barra
+                .clip(RoundedCornerShape(30.dp))  // Bordes redondeados
+                .background(Color.White)  // Fondo blanco para el TextField
+        ) {
+            TextField(
+                value = searchQuery,
+                onValueChange = { query ->
+                    searchQuery = query
+                    onSearch(query)  // Llamamos a onSearch cuando el usuario escribe
+                },
+                label = { Text("Buscar libros...") },
+                modifier = Modifier
+                    .fillMaxWidth() // El TextField ocupa todo el ancho del Box
+                    .padding(horizontal = 16.dp), // Espaciado interno en el TextField
+                singleLine = true
+            )
+        }
 
         // Ícono de usuario redondeado
         IconButton(onClick = { /* Acción de perfil de usuario */ }) {
             Icon(
                 painter = painterResource(id = R.drawable.ic_user),
                 contentDescription = "Perfil",
-
                 modifier = Modifier
                     .size(40.dp)
                     .clip(CircleShape),
-
                 tint = Color.White
             )
         }
     }
 }
-
 @Composable
-fun BookCatalog(books: List<Book>, modifier: Modifier = Modifier) {
-    LazyColumn(
-        modifier = modifier
-            .fillMaxWidth()
-            .padding(16.dp)
-            .fillMaxHeight()
+fun BookCatalog(books: List<BookDto>, modifier: Modifier = Modifier) {
+    LazyVerticalGrid(
+        columns = GridCells.Fixed(3), // Tres columnas
+        contentPadding = PaddingValues(8.dp),
+        modifier = modifier.fillMaxSize()
     ) {
         items(books) { book ->
-            BookItem(book = book)
+            BookItem(book = book)  // Muestra cada libro en la cuadrícula
         }
     }
 }
 
+
 @Composable
-fun BookItem(book: Book) {
-    Row(
+fun BookItem(book: BookDto) {
+    Column(
         modifier = Modifier
+            .padding(8.dp)
             .fillMaxWidth()
-            .padding(vertical = 8.dp)
-            .height(100.dp)
-            .clickable { /* Acción de seleccionar libro */ },
-        verticalAlignment = Alignment.CenterVertically
+            .clickable {
+                // Navegar a la pantalla de detalles del libro
+              //  navController.navigate("bookDetails/${book.id}")  // Usamos el ID del libro para navegar
+            },
+        horizontalAlignment = Alignment.CenterHorizontally
     ) {
-        // Imagen del libro
+        // Imagen del libro desde la URL
         Image(
-            painter = painterResource(id = book.imageRes),
+            painter = rememberImagePainter(book.coverUrl),
             contentDescription = book.title,
             modifier = Modifier
-                .size(60.dp)
+                .size(100.dp)
                 .clip(RoundedCornerShape(8.dp))
         )
-
-        Spacer(modifier = Modifier.width(16.dp))
-
-        Column(modifier = Modifier.weight(1f)) {
-            Text(text = book.title, color = Color.White, fontSize = 18.sp)
-            Text(text = book.author, color = Color.Gray, fontSize = 14.sp)
-        }
     }
 }
 
@@ -171,7 +183,6 @@ fun BottomBar(
     Row(
         modifier = modifier
             .fillMaxWidth()
-            .padding(vertical = 8.dp)
             .background(Color(0xFF212121)),
         horizontalArrangement = Arrangement.SpaceAround
     ) {
@@ -179,7 +190,7 @@ fun BottomBar(
             Icon(
                 painter = painterResource(id = R.drawable.ic_home),
                 contentDescription = "Home",
-                modifier = Modifier.size(36.dp),
+                modifier = Modifier.size(28.dp),
                 tint = Color.White
             )
         }
@@ -188,7 +199,7 @@ fun BottomBar(
             Icon(
                 painter = painterResource(id = R.drawable.ic_library),
                 contentDescription = "Biblioteca",
-                modifier = Modifier.size(36.dp),
+                modifier = Modifier.size(28.dp),
                 tint = Color.White
             )
         }
@@ -197,26 +208,34 @@ fun BottomBar(
             Icon(
                 painter = painterResource(id = R.drawable.c_explore1),
                 contentDescription = "Explorar",
-                modifier = Modifier.size(36.dp),
+                modifier = Modifier.size(28.dp),
                 tint = Color.White
             )
         }
     }
 }
+///o necesario
 
 @Preview(showBackground = true)
 @Composable
 fun PreviewHomeScreen() {
-    // Aquí creamos datos de ejemplo para la vista previa
-    val sampleBooks = listOf(
-        Book("Book 1", "Author 1", R.drawable.book_image),
-        Book("Book 2", "Author 2", R.drawable.book_image)
-    )
+    // Crear un ViewModel de prueba (puede ser un objeto Mock o un Fake ViewModel)
+    val fakeViewModel = object : HomeViewModel(FakeApiService()) {
+        // Simular el estado deseado para la vista previa
+    }
+
     HomeScreen(
-        onNavigateToLibrary = {},
-        onNavigateToExplore = {},
-        onNavigateToHome = {},
-        onSearch = {},
-        books = sampleBooks
+        viewModel = fakeViewModel,
+        onNavigateToLibrary = { /* Acción de prueba */ },
+        onNavigateToExplore = { /* Acción de prueba */ },
+        onNavigateToHome = { /* Acción de prueba */ }
     )
+}
+
+// Fake ApiService para proporcionar datos simulados
+class FakeApiService : ApiService {
+    override suspend fun searchBooks(title: String): BookResponse {
+        // Retornar datos simulados
+        return BookResponse(listOf(/* Lista de libros simulados */))
+    }
 }

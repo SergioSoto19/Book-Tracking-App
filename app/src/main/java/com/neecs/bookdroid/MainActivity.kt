@@ -26,6 +26,16 @@ import com.neecs.bookdroid.ui.composables.LoginScreen
 import com.neecs.bookdroid.ui.theme.BookdroidTheme
 import com.neecs.bookdroid.ui.viewmodel.LoginViewModel
 
+import androidx.compose.runtime.collectAsState
+import androidx.compose.ui.tooling.preview.Preview
+import androidx.lifecycle.viewmodel.compose.viewModel
+import com.neecs.bookdroid.network.ApiService
+import com.neecs.bookdroid.network.RetrofitClient.apiService
+import com.neecs.bookdroid.ui.composables.HomeScreen
+import com.neecs.bookdroid.ui.composables.RegisterScreen
+import com.neecs.bookdroid.ui.viewmodel.HomeViewModel
+import com.neecs.bookdroid.ui.viewmodel.HomeViewModelFactory
+
 class MainActivity : ComponentActivity() {
 
     private val loginViewModel: LoginViewModel by viewModels()
@@ -35,7 +45,11 @@ class MainActivity : ComponentActivity() {
         setContent {
             val navController = rememberNavController()
 
+            val navController = rememberNavController() // Controlador de navegación
+
             BookdroidTheme(darkTheme = true) {
+
+                // Configuración del NavHost y las pantallas de la app
                 NavHost(
                     navController = navController,
                     startDestination = "login"
@@ -61,7 +75,15 @@ class MainActivity : ComponentActivity() {
                                 )
                             },
                             onRegister = {
-                                println("Registration flow not implemented yet.")
+                                // Aquí defines la navegación o acción para "Registrarse"
+                                navController.navigate("register")
+                            },
+                            onLogin = {
+                                // Aquí se navega a la pantalla "home" cuando se inicia sesión
+                                navController.navigate("home") {
+                                    // Eliminar la pantalla de login para que no se pueda regresar
+
+                                }
                             }
                         )
                     }
@@ -69,78 +91,45 @@ class MainActivity : ComponentActivity() {
 
                     // Pantalla de Inicio (Home)
                     composable("home") {
+                        // Obtén el ViewModel aquí
+
+
+                        val homeViewModel: HomeViewModel = viewModel(factory = HomeViewModelFactory(apiService))
+
                         HomeScreen(
-                            onLogout = {
-                                navController.popBackStack("login", false)
+                            viewModel = homeViewModel, // Pasa el ViewModel aquí
+                            onNavigateToLibrary = {
+                                // Lógica para navegar a la pantalla de biblioteca
+                                navController.navigate("library")
                             },
-                            loginViewModel = loginViewModel
+                            onNavigateToExplore = {
+                                // Lógica para navegar a la pantalla de explorar
+                                navController.navigate("explore")
+                            },
+                            onNavigateToHome = {
+                                // Si ya estás en la pantalla de inicio, no necesitas navegar
+                                navController.navigate("home")
+                            }
                         )
                     }
+
+                   // composable("bookDetails/{bookId}") { backStackEntry ->
+                     //   val bookId = backStackEntry.arguments?.getString("bookId") ?: return@composable
+                       // val book = getBookById(bookId)  // Recuperar el libro usando el ID (este es un ejemplo)
+
+                        //BookDetailsScreen(
+                          //  book = book,
+                            //onAddToList = { /* Agregar a la lista */ }
+                        //)
+                    //}
+
+                    // pantalla de detalles del libro
+
+                    // Pantalla de contraseña olvidada
+
                 }
             }
         }
     }
 }
 
-@Composable
-fun HomeScreen(
-    onLogout: () -> Unit,
-    loginViewModel: LoginViewModel
-) {
-    var currentUserEmail by remember { mutableStateOf<String?>(null) }
-    var message by remember { mutableStateOf("") }
-
-    Scaffold(
-        modifier = Modifier.fillMaxSize()
-    ) { innerPadding ->
-        Column(
-            modifier = Modifier
-                .padding(innerPadding)
-                .fillMaxSize(),
-            verticalArrangement = Arrangement.spacedBy(16.dp)
-        ) {
-            Text(text = "Welcome to Home Screen!")
-
-            // Botón para obtener el usuario actual
-            Button(
-                onClick = {
-                    loginViewModel.retrieveCurrentUser(
-                        onResult = { userEmail ->
-                            currentUserEmail = userEmail
-                            message = if (userEmail != null) {
-                                "Current user email: $userEmail"
-                            } else {
-                                "No user is currently logged in."
-                            }
-                        },
-                        onError = { error ->
-                            message = "Failed to retrieve user: $error"
-                        }
-                    )
-                }
-            ) {
-                Text("Get Current User")
-            }
-
-            // Mostrar correo del usuario actual o mensaje de error
-            Text(text = message)
-
-            // Botón para cerrar sesión
-            Button(
-                onClick = {
-                    loginViewModel.logout(
-                        onSuccess = {
-                            message = "Logout successful!"
-                            onLogout()
-                        },
-                        onError = { error ->
-                            message = "Logout failed: $error"
-                        }
-                    )
-                }
-            ) {
-                Text("Logout")
-            }
-        }
-    }
-}
