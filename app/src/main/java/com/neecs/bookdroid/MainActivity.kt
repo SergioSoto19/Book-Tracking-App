@@ -4,18 +4,21 @@ import android.os.Bundle
 import androidx.activity.ComponentActivity
 import androidx.activity.compose.setContent
 import androidx.activity.viewModels
+import androidx.compose.foundation.layout.Arrangement
+import androidx.compose.foundation.layout.Column
 import androidx.compose.foundation.layout.fillMaxSize
 import androidx.compose.foundation.layout.padding
 import androidx.compose.material3.Button
 import androidx.compose.material3.Scaffold
 import androidx.compose.material3.Text
 import androidx.compose.runtime.Composable
-import androidx.compose.runtime.LaunchedEffect
+import androidx.compose.runtime.collectAsState
 import androidx.compose.runtime.getValue
 import androidx.compose.runtime.mutableStateOf
 import androidx.compose.runtime.remember
 import androidx.compose.runtime.setValue
 import androidx.compose.ui.Modifier
+import androidx.compose.ui.unit.dp
 import androidx.navigation.compose.NavHost
 import androidx.navigation.compose.composable
 import androidx.navigation.compose.rememberNavController
@@ -23,72 +26,54 @@ import com.neecs.bookdroid.ui.composables.LoginScreen
 import com.neecs.bookdroid.ui.theme.BookdroidTheme
 import com.neecs.bookdroid.ui.viewmodel.LoginViewModel
 
-import androidx.compose.runtime.collectAsState
-import com.neecs.bookdroid.ui.composables.RegisterScreen
-
 class MainActivity : ComponentActivity() {
 
-    private val loginViewModel: LoginViewModel by viewModels() // Inicializa el ViewModel
+    private val loginViewModel: LoginViewModel by viewModels()
 
     override fun onCreate(savedInstanceState: Bundle?) {
         super.onCreate(savedInstanceState)
         setContent {
-            val loginState = loginViewModel.uiState.collectAsState() // Obtenemos el estado actual de login
+            val navController = rememberNavController()
 
-            val navController = rememberNavController() // Controlador de navegación
-
-            BookdroidTheme(darkTheme = true){
-
-
-                // Configuración del NavHost y las pantallas de la app
+            BookdroidTheme(darkTheme = true) {
                 NavHost(
                     navController = navController,
-                    startDestination = "login" // Pantalla inicial
+                    startDestination = "login"
                 ) {
-                    // Pantalla de inicio de sesión
+                    // Pantalla de Login
                     composable("login") {
                         LoginScreen(
-                            uiState = loginState.value, // Estado actual del Login
-                            onFirstNameChange = loginViewModel::onFirstNameChange,
-                            onLastNameChange = loginViewModel::onLastNameChange,
+                            uiState = loginViewModel.uiState.collectAsState().value,
                             onUsernameOrEmailChange = loginViewModel::onUsernameOrEmailChange,
                             onPasswordChange = loginViewModel::onPasswordChange,
                             onForgotPassword = {
-                                // Aquí defines la navegación o acción para "¿Olvidaste la contraseña?"
-                                navController.navigate("forgotPassword")
+                                println("Forgot password clicked")
+                            },
+                            onLogin = { email, password -> // Proveer email y password
+                                loginViewModel.login(
+                                    onSuccess = {
+                                        println("Login successful!")
+                                        navController.navigate("home")
+                                    },
+                                    onError = { errorMessage ->
+                                        println("Login failed: $errorMessage")
+                                    }
+                                )
                             },
                             onRegister = {
-                                // Aquí defines la navegación o acción para "Registrarse"
-                                navController.navigate("register")
-                            },
-                            onLogin = {
-                                // Navegar a "home" después de iniciar sesión
-                                navController.navigate("home")
+                                println("Registration flow not implemented yet.")
                             }
                         )
                     }
 
-                    // Pantalla de registro (Ruta "register")
-                    composable("register") {
-                        RegisterScreen(
-                            onRegister = {
-                                // Lógica para registrar al usuario y navegar a la pantalla "home"
-                                navController.navigate("home")
-                            },
-                            onBackToLogin = {
-                                // Regresar a la pantalla de login
-                                navController.popBackStack("login", false)
-                            }
-                        )
-                    }
 
-                    // Pantalla de inicio (Home)
+                    // Pantalla de Inicio (Home)
                     composable("home") {
                         HomeScreen(
                             onLogout = {
-                                // Regresar a la pantalla de inicio de sesión
                                 navController.popBackStack("login", false)
-                            }
+                            },
+                            loginViewModel = loginViewModel
                         )
                     }
                 }
@@ -97,19 +82,65 @@ class MainActivity : ComponentActivity() {
     }
 }
 
-
 @Composable
-fun HomeScreen(onLogout: () -> Unit) {
-    // Pantalla de inicio de sesión después de un inicio exitoso
+fun HomeScreen(
+    onLogout: () -> Unit,
+    loginViewModel: LoginViewModel
+) {
+    var currentUserEmail by remember { mutableStateOf<String?>(null) }
+    var message by remember { mutableStateOf("") }
+
     Scaffold(
         modifier = Modifier.fillMaxSize()
     ) { innerPadding ->
-        // Contenido de la pantalla de inicio
-        Button(
-            onClick = onLogout,
-            modifier = Modifier.padding(innerPadding)
+        Column(
+            modifier = Modifier
+                .padding(innerPadding)
+                .fillMaxSize(),
+            verticalArrangement = Arrangement.spacedBy(16.dp)
         ) {
-            Text("Logout")
+            Text(text = "Welcome to Home Screen!")
+
+            // Botón para obtener el usuario actual
+            Button(
+                onClick = {
+                    loginViewModel.retrieveCurrentUser(
+                        onResult = { userEmail ->
+                            currentUserEmail = userEmail
+                            message = if (userEmail != null) {
+                                "Current user email: $userEmail"
+                            } else {
+                                "No user is currently logged in."
+                            }
+                        },
+                        onError = { error ->
+                            message = "Failed to retrieve user: $error"
+                        }
+                    )
+                }
+            ) {
+                Text("Get Current User")
+            }
+
+            // Mostrar correo del usuario actual o mensaje de error
+            Text(text = message)
+
+            // Botón para cerrar sesión
+            Button(
+                onClick = {
+                    loginViewModel.logout(
+                        onSuccess = {
+                            message = "Logout successful!"
+                            onLogout()
+                        },
+                        onError = { error ->
+                            message = "Logout failed: $error"
+                        }
+                    )
+                }
+            ) {
+                Text("Logout")
+            }
         }
     }
 }

@@ -26,16 +26,25 @@ suspend fun registerUser(email: String, password: String, displayName: String) {
     }
 }
 
-suspend fun loginUser(email: String, password: String) {
-    try {
-        val user = supabase.auth.signInWith(Email){
+suspend fun loginUser(email: String, password: String): Boolean {
+    return try {
+        // Intentar iniciar sesión con Supabase
+        supabase.auth.signInWith(Email) {
             this.email = email
             this.password = password
         }
+        println("Login successful for email: $email")
+        true // Devuelve true si el login es exitoso
     } catch (e: Exception) {
-        println("Error logging in: ${e.message}")
+        // Manejo de errores
+        println("Login failed: ${e.message}")
+        false // Devuelve false si ocurre un error
     }
 }
+
+
+
+
 
 suspend fun logoutUser() {
     try {
@@ -47,12 +56,13 @@ suspend fun logoutUser() {
 
 suspend fun retrieveUser(): UserInfo? {
     return try {
-        // Recuperar el usuario de la sesión actual
+        // Recuperar el usuario de la sesión actual con actualización explícita de sesión
         val user = supabase.auth.retrieveUserForCurrentSession(updateSession = true)
-        println("User retrieved successfully: ${user?.id}")
+        println("User retrieved successfully: ${user.email}")
         user
     } catch (e: Exception) {
         println("Error retrieving user: ${e.message}")
         null // Devolver null si ocurre un error
     }
 }
+

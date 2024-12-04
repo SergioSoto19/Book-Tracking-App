@@ -50,6 +50,8 @@ dependencies {
     implementation(libs.androidx.constraintlayout.compose)
     implementation(libs.androidx.navigation.compose)
     implementation(platform(libs.bom.v302))
+    implementation(libs.auth.kt)
+    implementation(libs.realtime.kt)
     implementation(libs.github.postgrest.kt)
     implementation(libs.ktor.client.android.v301)
     implementation(libs.androidx.core.ktx)
