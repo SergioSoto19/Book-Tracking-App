@@ -46,8 +46,12 @@ import coil.compose.rememberImagePainter
 import com.neecs.bookdroid.entities.BookDto
 import com.neecs.bookdroid.entities.BookResponse
 import com.neecs.bookdroid.network.ApiService
+import com.neecs.bookdroid.supabase.saveBook
 import com.neecs.bookdroid.ui.viewmodel.HomeViewModel
-
+import kotlinx.coroutines.CoroutineScope
+import kotlinx.coroutines.DelicateCoroutinesApi
+import kotlinx.coroutines.Dispatchers
+import kotlinx.coroutines.launch
 
 
 @Composable
@@ -56,7 +60,7 @@ fun HomeScreen(
     onNavigateToLibrary: () -> Unit,
     onNavigateToExplore: () -> Unit,
     onNavigateToHome: () -> Unit,
-    onBookClick: (String) -> Unit // Cambiar el callback para aceptar `bookId` en lugar de todo el objeto `BookDto`
+    onBookClick: (BookDto) -> Unit // Callback acepta el objeto completo
 ) {
     Column(
         modifier = Modifier.fillMaxSize()
@@ -73,7 +77,7 @@ fun HomeScreen(
             modifier = Modifier
                 .weight(1f)
                 .fillMaxWidth(),
-            onBookClick = { book -> onBookClick(book.title) } // Pasar `book.title` al callback
+            onBookClick = onBookClick // Pasar el objeto completo al callback
         )
 
         BottomBar(
@@ -86,6 +90,7 @@ fun HomeScreen(
         )
     }
 }
+
 
 
 
@@ -254,8 +259,14 @@ class FakeApiService : ApiService {
 }
 
 @Composable
-fun BookDetailsScreen(bookId: String, onBack: () -> Unit) {
-    // Usa el `bookId` para buscar detalles si es necesario (puedes hacerlo desde un ViewModel o localmente)
+fun BookDetailsScreen(
+    book: BookDto,
+    userId: String,
+    onBack: () -> Unit
+) {
+    var saveMessage by remember { mutableStateOf("") } // Para mostrar mensajes de éxito o error
+    var isSaving by remember { mutableStateOf(false) } // Para mostrar estado de guardado
+
     Column(
         modifier = Modifier
             .fillMaxSize()
@@ -263,18 +274,67 @@ fun BookDetailsScreen(bookId: String, onBack: () -> Unit) {
         horizontalAlignment = Alignment.CenterHorizontally,
         verticalArrangement = Arrangement.Center
     ) {
-        Text(
-            text = "Detalles del Libro",
-            style = MaterialTheme.typography.titleLarge
+        // Mostrar imagen del libro
+        Image(
+            painter = rememberAsyncImagePainter(book.coverUrl),
+            contentDescription = book.title,
+            modifier = Modifier.size(200.dp)
         )
         Spacer(modifier = Modifier.height(16.dp))
-        Text(text = "ID del libro: $bookId")
+
+        // Título del libro
+        Text(
+            text = book.title,
+            style = MaterialTheme.typography.titleLarge,
+            textAlign = TextAlign.Center
+        )
         Spacer(modifier = Modifier.height(16.dp))
-        Button(onClick = onBack) {
-            Text(text = "Volver")
+
+        // Botón para guardar el libro
+        Button(
+            onClick = {
+                isSaving = true
+                CoroutineScope(Dispatchers.IO).launch {
+                    try {
+                        saveBook(book.title, book.coverUrl) // Guardar libro
+                        saveMessage = "Libro guardado exitosamente"
+                    } catch (e: Exception) {
+                        saveMessage = "Error al guardar el libro: ${e.message}"
+                    } finally {
+                        isSaving = false
+                    }
+                }
+            },
+            modifier = Modifier.fillMaxWidth(),
+            enabled = !isSaving // Desactivar botón mientras se guarda
+        ) {
+            Text(if (isSaving) "Guardando..." else "Guardar libro")
+        }
+
+        Spacer(modifier = Modifier.height(16.dp))
+
+        // Mostrar mensaje de éxito o error
+        if (saveMessage.isNotEmpty()) {
+            Text(
+                text = saveMessage,
+                color = if (saveMessage.contains("exitosamente")) Color.Green else Color.Red,
+                style = MaterialTheme.typography.bodyMedium
+            )
+        }
+
+        Spacer(modifier = Modifier.height(16.dp))
+
+        // Botón para volver
+        Button(
+            onClick = onBack,
+            modifier = Modifier.fillMaxWidth()
+        ) {
+            Text("Volver")
         }
     }
 }
+
+
 
 
 
