@@ -10,7 +10,7 @@ import kotlinx.coroutines.flow.StateFlow
 import kotlinx.coroutines.launch
 
 
-class HomeViewModel(private val apiService: ApiService) : ViewModel() {
+open class HomeViewModel(private val apiService: ApiService) : ViewModel() {
 
     private val _books = MutableStateFlow<List<BookDto>>(emptyList())  // Lista de libros
     val books: StateFlow<List<BookDto>> get() = _books  // Exposición solo de lectura
