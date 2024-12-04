@@ -24,6 +24,7 @@ import com.neecs.bookdroid.ui.theme.BookdroidTheme
 import com.neecs.bookdroid.ui.viewmodel.LoginViewModel
 
 import androidx.compose.runtime.collectAsState
+import androidx.compose.ui.tooling.preview.Preview
 import androidx.lifecycle.viewmodel.compose.viewModel
 import com.neecs.bookdroid.network.ApiService
 import com.neecs.bookdroid.network.RetrofitClient.apiService
@@ -114,6 +115,17 @@ class MainActivity : ComponentActivity() {
                         )
                     }
 
+                   // composable("bookDetails/{bookId}") { backStackEntry ->
+                     //   val bookId = backStackEntry.arguments?.getString("bookId") ?: return@composable
+                       // val book = getBookById(bookId)  // Recuperar el libro usando el ID (este es un ejemplo)
+
+                        //BookDetailsScreen(
+                          //  book = book,
+                            //onAddToList = { /* Agregar a la lista */ }
+                        //)
+                    //}
+
+                    // pantalla de detalles del libro
 
                     // Pantalla de contraseña olvidada
 
@@ -122,3 +134,4 @@ class MainActivity : ComponentActivity() {
         }
     }
 }
+
