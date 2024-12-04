@@ -43,7 +43,6 @@ class MainActivity : ComponentActivity() {
     override fun onCreate(savedInstanceState: Bundle?) {
         super.onCreate(savedInstanceState)
         setContent {
-            val navController = rememberNavController()
 
             val navController = rememberNavController() // Controlador de navegación
 
@@ -78,13 +77,6 @@ class MainActivity : ComponentActivity() {
                                 // Aquí defines la navegación o acción para "Registrarse"
                                 navController.navigate("register")
                             },
-                            onLogin = {
-                                // Aquí se navega a la pantalla "home" cuando se inicia sesión
-                                navController.navigate("home") {
-                                    // Eliminar la pantalla de login para que no se pueda regresar
-
-                                }
-                            }
                         )
                     }
 
